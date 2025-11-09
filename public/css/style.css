@@ -1,0 +1,217 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
+
+* { box-sizing: border-box; }
+
+/* Unified theme variables (match explore.css) */
+:root {
+  --primary: #e41955;
+  --accent: #c21749;
+  --background: #f1f5f9;
+  --card-bg: #ffffff;
+  --text: #1f2937;
+  --muted: #64748b;
+  --glow: rgba(228,25,85,0.25);
+  --ring: rgba(228,25,85,0.08);
+}
+
+/* Dark mode */
+html[data-theme="dark"], body[data-theme="dark"] {
+  --background: #0b1222;
+  --card-bg: #0f172a;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --ring: rgba(255,255,255,0.06);
+}
+
+/* Smooth page fade */
+@keyframes pageFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.page-enter { animation: pageFadeIn 380ms ease; }
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--background);
+  color: var(--text);
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.card {
+  width: 1100px;
+  max-width: 95vw;
+  min-height: 520px;
+  background: var(--card-bg);
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.18), 0 8px 16px rgba(0,0,0,0.12);
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* strict two columns */
+  overflow: hidden;
+  transition: box-shadow 240ms ease, transform 200ms ease;
+}
+
+/* left: hero */
+.card .left {
+  padding: 40px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(1200px 600px at -10% -10%, rgba(124,58,237,0.25), transparent 60%),
+              linear-gradient(135deg, #0b1222, #0f172a);
+}
+
+.card h1.title {
+  color: var(--primary);
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* login form embellishments */
+.form-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.input-wrap { position: relative; display: flex; align-items: center; }
+.input-wrap i { position: absolute; left: 12px; color: var(--muted); }
+.input-wrap .suffix { position: absolute; right: 8px; padding: 8px; border-radius: 10px; border: none; background: transparent; color: var(--muted); cursor: default; }
+
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #eaeaea;
+  background: #f6f6f6;
+  font-size: 14px;
+  outline: none;
+  transition: box-shadow 220ms ease, border-color 220ms ease, background-color 220ms ease;
+}
+.input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.btn {
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+  font-weight: 700;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: transform .08s ease-in, opacity .22s ease, box-shadow .22s ease;
+  box-shadow: 0 8px 18px var(--glow);
+}
+.btn:active { transform: scale(0.98); box-shadow: 0 4px 12px var(--glow); }
+.btn:hover { opacity: 0.96; }
+
+.note {
+  font-size: 12px;
+  color: #666;
+}
+
+/* right: message + logo */
+.card .right {
+  background: var(--card-bg);
+  color: var(--text);
+  padding: 48px 38px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.logo {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.35);
+  margin-bottom: 16px;
+}
+
+.right h2 {
+  margin: 6px 0 8px;
+  font-weight: 700;
+}
+
+.right p {
+  margin: 0 0 18px;
+  opacity: 0.95;
+}
+
+.ghost {
+  background: transparent;
+  border: 2px solid #fff;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+  transition: background .22s ease, color .22s ease, transform .12s ease;
+}
+.ghost:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
+
+/* hero and brand visuals */
+.hero { text-align: center; color: #fff; }
+.hero-logo { width: 160px; height: 160px; border-radius: 28px; box-shadow: 0 24px 60px rgba(124,58,237,0.35); margin-bottom: 18px; }
+.hero-heading { font-size: 20px; font-weight: 700; opacity: 0.9; }
+.brand { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.brand-icon { width: 28px; height: 28px; border-radius: 6px; }
+.brand-name { font-weight: 700; color: var(--muted); }
+
+/* login-specific input styling */
+.card .right .input { background: #0b1222; color: var(--text); padding-left: 38px; }
+.card .right .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--ring); }
+
+/* buttons */
+.btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); box-shadow: 0 8px 18px var(--glow); }
+.btn-secondary { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+.btn-secondary:hover { background: var(--ring); }
+.actions { display: flex; gap: 10px; margin-top: 8px; }
+
+/* Auth single-card pages (forgot/reset) */
+.auth-card {
+  width: 560px;
+  max-width: 95vw;
+  background: var(--card-bg);
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.18), 0 8px 16px rgba(0,0,0,0.12);
+  padding: 32px 28px;
+}
+.auth-card .title { color: var(--primary); margin: 0 0 8px; font-size: 24px; }
+.auth-card .subtitle { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
+.auth-card .input { background: #0b1222; color: var(--text); padding-left: 38px; }
+.auth-card .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--ring); }
+.auth-card .actions { margin-top: 12px; }
+
+/* Link-style button override */
+.btn-link {
+  background: transparent;
+  color: var(--muted);
+  padding: 0;
+  box-shadow: none;
+  border: none;
+  font-weight: 500;
+  text-decoration: underline;
+}
+.btn-link:hover { opacity: 1; color: var(--text); }
+
+/* Generic modal for auth flows (OTP) */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(5px);
+  display: grid; place-items: center; z-index: 1000; animation: pageFadeIn 200ms ease;
+}
+.modal-card {
+  width: 520px; max-width: 95vw; background: var(--card-bg); color: var(--text);
+  border-radius: 18px; box-shadow: 0 18px 40px rgba(0,0,0,0.18), 0 8px 16px rgba(0,0,0,0.12);
+  padding: 22px 22px;
+}
+.modal-actions { display: flex; gap: 10px; margin-top: 12px; }
+
+/* responsive: only stack on very small screens */
+@media (max-width: 560px) {
+  .card { grid-template-columns: 1fr; }
+  .card .right { padding-block: 28px; }
+}
