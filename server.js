@@ -251,9 +251,14 @@ app.get('/api/cloud_health', async (req, res) => {
 app.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
 
-  // if (!email.endsWith("@vit.edu")) {
-  //   return res.send("❌ Only VIT emails are allowed");
-  // }
+  // College email validation (configurable via environment variable)
+  const requiredEmailDomain = process.env.REQUIRED_EMAIL_DOMAIN;
+  if (requiredEmailDomain && !email.endsWith(requiredEmailDomain)) {
+    return res.status(400).json({ 
+      ok: false, 
+      message: `❌ Only ${requiredEmailDomain} emails are allowed for registration` 
+    });
+  }
 
   db.query(
     "SELECT * FROM credentials WHERE username = ? OR email = ?",
