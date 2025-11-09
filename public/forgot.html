@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"/>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="icon" type="image/png" href="Beatbuzz_icon.png">
-  </head>
+</head>
 <body class="page-enter" data-theme="dark">
   <div class="auth-card">
     <div class="brand mb-3 d-flex align-items-center">
@@ -16,42 +16,203 @@
       <div class="brand-name">Beatbuzz</div>
     </div>
     <h1 class="title">Forgot your password?</h1>
-    <p class="subtitle">Enter your registered email and we'll send you a reset link.</p>
-    <form id="forgotForm">
-      <label class="form-label" for="email">Email address</label>
-      <div class="input-wrap">
-        <i class="bi bi-envelope"></i>
-        <input class="input" id="email" type="email" name="email" placeholder="Enter your email" required />
-      </div>
-      <div class="actions mt-3">
-        <button class="btn btn-primary" type="submit">Send reset link</button>
-        <a class="btn btn-secondary" href="index.html">Back to login</a>
-      </div>
-    </form>
-    <p id="status" class="note"></p>
+    <p class="subtitle">Enter your email or username and we'll send you an OTP to reset your password.</p>
+    
+    <!-- Step 1: Request OTP -->
+    <div id="requestStep">
+      <form id="forgotForm">
+        <label class="form-label" for="identifier">Email or Username</label>
+        <div class="input-wrap">
+          <i class="bi bi-person"></i>
+          <input class="input" id="identifier" type="text" name="identifier" placeholder="Enter your email or username" required />
+        </div>
+        <div class="actions mt-3">
+          <button class="btn btn-primary" type="submit">Send OTP</button>
+          <a class="btn btn-secondary" href="index.html">Back to login</a>
+        </div>
+      </form>
+      <p id="requestStatus" class="note"></p>
+    </div>
+
+    <!-- Step 2: Verify OTP and Reset Password -->
+    <div id="verifyStep" style="display:none;">
+      <form id="resetForm">
+        <label class="form-label" for="otp">OTP</label>
+        <div class="input-wrap">
+          <i class="bi bi-shield-lock"></i>
+          <input class="input" id="otp" type="text" placeholder="6-digit OTP" pattern="\d{6}" maxlength="6" required />
+        </div>
+        
+        <label class="form-label mt-2" for="newPassword">New Password</label>
+        <div class="input-wrap">
+          <i class="bi bi-lock"></i>
+          <input class="input" id="newPassword" type="password" placeholder="Enter new password" required />
+        </div>
+        
+        <label class="form-label mt-2" for="confirmPassword">Confirm Password</label>
+        <div class="input-wrap">
+          <i class="bi bi-lock"></i>
+          <input class="input" id="confirmPassword" type="password" placeholder="Confirm new password" required />
+        </div>
+
+        <div class="actions mt-3">
+          <button class="btn btn-primary" type="submit">Reset Password</button>
+          <button class="btn btn-link" type="button" id="resendOtpBtn">Resend OTP</button>
+          <button class="btn btn-secondary" type="button" id="backBtn">Back</button>
+        </div>
+      </form>
+      <p id="verifyStatus" class="note"></p>
+    </div>
   </div>
+
   <script>
-    document.getElementById('forgotForm').addEventListener('submit', async function(e){
-      e.preventDefault();
-      const email = document.getElementById('email').value.trim();
-      const status = document.getElementById('status');
-      status.textContent = 'Sending reset link...';
-      try {
-        const resp = await fetch('/api/forgot_password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email })
-        });
-        if (resp.ok) {
-          status.textContent = 'If the email exists, a reset link has been sent.';
-        } else {
-          const txt = await resp.text();
-          status.textContent = txt || 'Failed to send reset link.';
-        }
-      } catch (err) {
-        status.textContent = 'Network error. Please try again.';
+    (function(){
+      const requestStep = document.getElementById('requestStep');
+      const verifyStep = document.getElementById('verifyStep');
+      const forgotForm = document.getElementById('forgotForm');
+      const resetForm = document.getElementById('resetForm');
+      const requestStatus = document.getElementById('requestStatus');
+      const verifyStatus = document.getElementById('verifyStatus');
+      const resendBtn = document.getElementById('resendOtpBtn');
+      const backBtn = document.getElementById('backBtn');
+      
+      let userIdentifier = { email: '', username: '' };
+      let cooldownTimer = null;
+
+      function startCooldown(seconds) {
+        let s = seconds;
+        resendBtn.disabled = true;
+        resendBtn.textContent = `Resend in ${s}s`;
+        if (cooldownTimer) clearInterval(cooldownTimer);
+        cooldownTimer = setInterval(() => {
+          s -= 1;
+          if (s <= 0) {
+            clearInterval(cooldownTimer);
+            resendBtn.disabled = false;
+            resendBtn.textContent = 'Resend OTP';
+          } else {
+            resendBtn.textContent = `Resend in ${s}s`;
+          }
+        }, 1000);
       }
-    });
+
+      // Step 1: Request OTP
+      forgotForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const identifier = document.getElementById('identifier').value.trim();
+        requestStatus.textContent = 'Sending OTP...';
+        
+        // Determine if it's an email or username
+        const isEmail = identifier.includes('@');
+        const payload = isEmail ? { email: identifier } : { username: identifier };
+        
+        try {
+          const resp = await fetch('/api/forgot_password_otp_request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await resp.json().catch(() => null);
+          
+          if (resp.ok && data && data.ok) {
+            requestStatus.textContent = '✅ OTP sent to your email. Check your inbox.';
+            userIdentifier = payload;
+            setTimeout(() => {
+              requestStep.style.display = 'none';
+              verifyStep.style.display = 'block';
+              startCooldown(data.cooldown || 60);
+            }, 1000);
+          } else if (resp.status === 429 && data) {
+            requestStatus.textContent = data.message || 'Too many requests. Please wait.';
+          } else {
+            requestStatus.textContent = (data && data.message) ? data.message : 'Failed to send OTP. Please try again.';
+          }
+        } catch (err) {
+          requestStatus.textContent = 'Network error. Please try again.';
+        }
+      });
+
+      // Step 2: Verify OTP and Reset Password
+      resetForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const otp = document.getElementById('otp').value.trim();
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        if (newPassword.length < 6) {
+          verifyStatus.textContent = 'Password must be at least 6 characters.';
+          return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+          verifyStatus.textContent = 'Passwords do not match.';
+          return;
+        }
+        
+        verifyStatus.textContent = 'Resetting password...';
+        
+        try {
+          const resp = await fetch('/api/forgot_password_otp_verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...userIdentifier,
+              otp,
+              new_password: newPassword
+            })
+          });
+          const data = await resp.json().catch(() => null);
+          
+          if (resp.ok && data && data.ok) {
+            verifyStatus.textContent = '✅ Password reset successful! Redirecting to login...';
+            setTimeout(() => {
+              window.location.href = '/index.html';
+            }, 1500);
+          } else {
+            verifyStatus.textContent = (data && data.message) ? data.message : 'Failed to reset password. Check OTP and try again.';
+          }
+        } catch (err) {
+          verifyStatus.textContent = 'Network error. Please try again.';
+        }
+      });
+
+      // Resend OTP
+      resendBtn.addEventListener('click', async function() {
+        if (resendBtn.disabled) return;
+        verifyStatus.textContent = 'Resending OTP...';
+        
+        try {
+          const resp = await fetch('/api/forgot_password_otp_request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userIdentifier)
+          });
+          const data = await resp.json().catch(() => null);
+          
+          if (resp.ok && data && data.ok) {
+            verifyStatus.textContent = '✅ OTP resent. Check your email.';
+            startCooldown(data.cooldown || 60);
+          } else if (resp.status === 429 && data) {
+            verifyStatus.textContent = data.message || 'Too many requests. Please wait.';
+            if (data.cooldown) startCooldown(data.cooldown);
+          } else {
+            verifyStatus.textContent = (data && data.message) ? data.message : 'Failed to resend OTP.';
+          }
+        } catch (err) {
+          verifyStatus.textContent = 'Network error. Please try again.';
+        }
+      });
+
+      // Back button
+      backBtn.addEventListener('click', function() {
+        verifyStep.style.display = 'none';
+        requestStep.style.display = 'block';
+        document.getElementById('otp').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        verifyStatus.textContent = '';
+      });
+    })();
   </script>
   <script src="theme.js"></script>
 </body>
